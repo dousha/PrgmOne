@@ -1,0 +1,6 @@
+name: ProgramOne
+main: com.minexf.prgmone.PrgmOne
+version: 0.1
+permissions:
+  prgmone.use:
+    description: Grants to use the programming interface

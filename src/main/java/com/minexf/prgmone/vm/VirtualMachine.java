@@ -1,72 +1,116 @@
 package com.minexf.prgmone.vm;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+
+import com.minexf.prgmone.vm.exceptions.VMException;
+import com.minexf.prgmone.vm.opcodes.OpcodeIndexer;
+
+import xyz.upperlevel.spigot.book.BookUtil.BookBuilder;
 
 /**
  * This class is the foundation of PrgmOne VM.
- * It takes a string for construction.
  * @author dousha
- *
+ * @since v0.1-alpha
  */
 public class VirtualMachine extends Thread {
 	
-	public VirtualMachine(List<String> code, int size)
+	public VirtualMachine(int size, OpcodeIndexer ins)
 	{
-		_code = code;
-		_ram = new Byte[size];
-		_line = 0;
+		_ins = ins;
+		_state = new VirtualMachineState(size);
 	}
 	
 	@Override
 	public void run()
 	{
-		
-	}
-	
-	public void Pause()
-	{
-		
-	}
-	
-	public void Resume()
-	{
-		
+		_processor = new BookProcessor(_book);
+		_code = _processor.getContent();
+		_running = true;
+		try {
+			for(_state._line = 0; 
+					_state._line < _code.size() && _running;
+					_state._line++)
+			{
+				String curLine = _code.get(_state._line).trim();
+				if(curLine.startsWith("#")) continue;
+				if(curLine.contains(" "))
+				{
+					_ins.GetCode(curLine.split(" ", 1)[0])
+						.Execute(_state, curLine.split(" ", 1)[1]);
+				}
+				else
+				{
+					_ins.GetCode(curLine).Execute(_state, null);
+				}
+			}
+		}
+		catch (VMException ex)
+		{
+			_runner.sendMessage(TellException(ex));
+			Halt();
+		}
 	}
 	
 	public void Halt()
 	{
+		_running = false;
+	}
+	
+	public void Debug()
+	{
+		Halt();
+		// TODO: write a book for this
+		BookBuilder book = xyz.upperlevel.spigot.book.BookUtil.writtenBook();
+		book.author("Your computer");
+		book.title("Debug output");
 		
+		book.build();
 	}
 	
-	public void Debug(Player p)
+	public void LoadCode(List<String> code)
 	{
-		Pause();
+		_code = code;
 	}
 	
-	public Byte RamRead(int offset)
+	public void LoadCodeFromBook(ItemStack book)
 	{
-		return _ram[offset % _ram.length];
-	}
-	
-	public void RamWrite(int offset, Byte data)
-	{
-		_ram[offset % _ram.length] = data;
+		// _processor = new BookProcessor(book);
+		// _code = _processor.getContent();
+		// the method above is too expensive to execute
+		// in the main thread
+		_book = book;
 	}
 	
 	public String getLine()
 	{
-		return _code.get(_line);
+		return _code.get(_state._line);
 	}
 	
 	public int getLineNo()
 	{
-		return _line;
+		return _state._line;
 	}
 	
-	private final List<String> _code;
-	private final Byte[] _ram;
-	private volatile Registers _reg;
-	private volatile int _line;
+	public void SetRunner(Player p)
+	{
+		_runner = p;
+	}
+	
+	private String TellException(VMException ex)
+	{
+		return ex.what() + " at line " + String.valueOf(_state._line);
+	}
+
+	private final OpcodeIndexer _ins;
+	private final VirtualMachineState _state;
+	private ItemStack _book;
+	private BookProcessor _processor;
+	private List<String> _code;
+	private volatile boolean _running;
+	private Player _runner;
+
 }

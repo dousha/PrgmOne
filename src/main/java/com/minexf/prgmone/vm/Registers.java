@@ -1,5 +1,7 @@
 package com.minexf.prgmone.vm;
 
+import com.minexf.prgmone.utils.NumberParser;
+
 /**
  * This class is the collection of registers.
  * @author dousha
@@ -7,64 +9,56 @@ package com.minexf.prgmone.vm;
  */
 public class Registers {
 	
-	public Registers(VirtualMachine vm)
+	public final int REGISTER_SIZE = 8;
+	public final int FLAG_SIZE = 4;
+	
+	public Registers()
 	{
-		_vm = vm;
-		_ints = new int[8];
+		_ints = new int[REGISTER_SIZE];
+		_flags = new boolean[FLAG_SIZE];
 	}
 	
-	public int GetContent(String name) throws BadSyntaxException, RegisterNotFoundException
+	public int GetContent(String name)
 	{
 		// name could be r[0-7]
-		if(name.length() != 2)
-		{
-			throw new BadSyntaxException(_vm.getLine(), _vm.getLineNo(), "Bad register name");
-		}
 		Integer i = Integer.valueOf(name.charAt(1));
-		if(i < 0 || i > 7)
-		{
-			throw new RegisterNotFoundException();
-		}
 		return _ints[i];
 	}
 	
-	public void SetContent(String name, String value) throws BadSyntaxException, RegisterNotFoundException
+	public void SetContent(String name, String value)
 	{
-		// name could be r[0-7]
-		if(name.length() != 2)
-		{
-			throw new BadSyntaxException(_vm.getLine(), _vm.getLineNo(), "Bad register name");
-		}
 		Integer i = Integer.valueOf(name.charAt(1));
-		if(i < 0 || i > 7)
-		{
-			throw new RegisterNotFoundException();
-		}
-		Integer v = new Integer(0);
-		if(value.charAt(0) == '0')
-		{
-			switch(value.charAt(1))
-			{
-			case 'x':
-				v = Integer.valueOf(value.substring(2), 16);
-				break;
-			case 'o':
-				v = Integer.valueOf(value.substring(2), 8);
-				break;
-			case 'b':
-				v = Integer.valueOf(value.substring(2), 2);
-				break;
-			default:
-				throw new BadSyntaxException(_vm.getLine(), _vm.getLineNo(), "Bad immediate format");
-			}
-		}
-		else
-		{
-			v = Integer.valueOf(value);
-		}
+		Integer v = NumberParser.ParseInt(value);
 		_ints[i] = v.intValue();
 	}
+	
+	public void SetContent(String name, int value) {
+		Integer i = Integer.valueOf(name.charAt(1));
+		_ints[i] = value;
+	}
+	
+	public int GetFlag()
+	{
+		int i = 0;
+		int x = 0;
+		for(boolean flag : _flags)
+		{
+			if(flag)
+			{
+				i |= (1 << x);
+				x++;
+			}
+		}
+		return i;
+	}
+	
+	public void SetFlag(String name)
+	{
+		// int i = GetContent(name);
+		
+	}
 
-	private final VirtualMachine _vm;
 	private int[] _ints;
+	private boolean[] _flags;
+
 }

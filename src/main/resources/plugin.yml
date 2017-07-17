@@ -4,3 +4,25 @@ version: 0.1
 permissions:
   prgmone.use:
     description: Grants to use the programming interface
+    children:
+      - prgmone.use.interrupt
+      - prgmone.use.burn
+      - prgmone.use.network
+      - prgmone.use.peripheral
+  prgmone.use.superuser:
+    description: Grants all permissions on using the programming interface
+    children:
+      - prgmone.use
+      - prgmone.use.native
+  prgmone.use.burn:
+    description: Grants to burn current code into disks
+    children:
+      - prgmone.use.peripheral
+  prgmone.use.interrupt:
+    description: Grants to use Interrupt Service Routine in code
+  prgmone.use.network:
+    description: Grants to access the (real) Internet
+  prgmone.use.peripheral:
+    description: Grants to use peripherals
+  prgmone.use.native:
+    description: Grants to use native code interface
